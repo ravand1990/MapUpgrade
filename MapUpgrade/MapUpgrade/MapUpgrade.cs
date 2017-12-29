@@ -24,7 +24,8 @@ namespace MapUpgrade
         private readonly IngameState ingameState;
         private bool isBusy;
         private MD5 md5Hasher = MD5.Create();
-
+        private long currentStash;
+        private List<Tuple<string, RectangleF>> maps = new List<Tuple<string, RectangleF>>();
 
         public MapUpgrade()
         {
@@ -114,11 +115,15 @@ namespace MapUpgrade
 
         private void indicateMapPairs()
         {
-            if (!ingameState.IngameUi.InventoryPanel.IsVisible)
+            var thisStash = ingameState.ServerData.StashPanel.VisibleStash.Address;
+            if (!ingameState.IngameUi.InventoryPanel.IsVisible) return;
 
-                return;
-            var maps = getInventoryMaps();
-            if(maps == null)
+            if (currentStash != thisStash)
+            {
+                maps = getInventoryMaps();
+            }
+      
+            if (maps == null)
             {
                 return;
             }
@@ -150,6 +155,7 @@ namespace MapUpgrade
                     i++;
                 j++;
             }
+            currentStash = thisStash;
         }
 
         private Dictionary<string, int> getMapPairs()
