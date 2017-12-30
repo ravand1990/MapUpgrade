@@ -115,18 +115,11 @@ namespace MapUpgrade
 
         private void indicateMapPairs()
         {
-            if (!ingameState.IngameUi.InventoryPanel.IsVisible) return;
-            var thisStash = ingameState.ServerData.StashPanel.VisibleStash.Address;
-
-            //if (currentStash != thisStash)
-            //{
-            //    getInventoryMaps();
-            //}
+            if (!ingameState.ServerData.StashPanel.IsVisible) return;
       
-            if (maps == null)
+            if (maps != null)
             {
-                return;
-            }
+            
             var foundTuples = maps.GroupBy(c => c.Item1).Where(g => g.Skip(1).Any() && g.Count() >= 3)
                 .SelectMany(c => c).OrderBy(c => c.Item1).ToList();
 
@@ -155,7 +148,7 @@ namespace MapUpgrade
                     i++;
                 j++;
             }
-            currentStash = thisStash;
+            }
         }
 
         private Dictionary<string, int> getMapPairs()
