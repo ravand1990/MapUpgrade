@@ -45,7 +45,6 @@ namespace MapUpgrade
         {
             if (!Settings.Enable)
                 return;
-
             debug();
 
             indicateMapPairs();
@@ -56,8 +55,6 @@ namespace MapUpgrade
                 transferMapPairs();
                 isBusy = false;
             }
-
-
         }
 
         public override void EntityAdded(EntityWrapper entityWrapper)
@@ -78,12 +75,9 @@ namespace MapUpgrade
         private void getInventoryMaps()
         {
             while (true) { 
-            if (!ingameState.ServerData.StashPanel.IsVisible)
+            if (ingameState.ServerData.StashPanel.IsVisible)
             {
-                return;
-            }
             maps = new List<Tuple<string, RectangleF>>();
-
             var visibleStash = ingameState.ServerData.StashPanel.VisibleStash;
             var i = 0;
             foreach (var item in visibleStash.VisibleInventoryItems)
@@ -112,7 +106,8 @@ namespace MapUpgrade
                     var map = new Tuple<string, RectangleF>(itemBase.BaseName, rect);
                     maps.Add(map);
                 }
-            }
+                    }
+                }
             Thread.Sleep(1000);
             }
         }
