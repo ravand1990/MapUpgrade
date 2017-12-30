@@ -26,6 +26,7 @@ namespace MapUpgrade
         private MD5 md5Hasher = MD5.Create();
         private long currentStash;
         private List<Tuple<string, RectangleF>> maps = new List<Tuple<string, RectangleF>>();
+        static Thread getMapsThread;
 
         public MapUpgrade()
         {
@@ -36,13 +37,14 @@ namespace MapUpgrade
         public override void Initialise()
         {
             base.Initialise();
+            getMapsThread = new Thread(getInventoryMaps);
+            getMapsThread.Start();
         }
 
         public override void Render()
         {
             if (!Settings.Enable)
                 return;
-
 
             debug();
 
@@ -54,6 +56,8 @@ namespace MapUpgrade
                 transferMapPairs();
                 isBusy = false;
             }
+
+
         }
 
         public override void EntityAdded(EntityWrapper entityWrapper)
@@ -71,13 +75,14 @@ namespace MapUpgrade
             base.OnClose();
         }
 
-        private List<Tuple<string, RectangleF>> getInventoryMaps()
+        private void getInventoryMaps()
         {
+            while (true) { 
             if (!ingameState.ServerData.StashPanel.IsVisible)
             {
-                return null;
+                return;
             }
-            var maps = new List<Tuple<string, RectangleF>>();
+            maps = new List<Tuple<string, RectangleF>>();
 
             var visibleStash = ingameState.ServerData.StashPanel.VisibleStash;
             var i = 0;
@@ -108,8 +113,8 @@ namespace MapUpgrade
                     maps.Add(map);
                 }
             }
-
-            return maps;
+            Thread.Sleep(1000);
+            }
         }
 
 
@@ -118,10 +123,10 @@ namespace MapUpgrade
             if (!ingameState.IngameUi.InventoryPanel.IsVisible) return;
             var thisStash = ingameState.ServerData.StashPanel.VisibleStash.Address;
 
-            if (currentStash != thisStash)
-            {
-                maps = getInventoryMaps();
-            }
+            //if (currentStash != thisStash)
+            //{
+            //    getInventoryMaps();
+            //}
       
             if (maps == null)
             {
@@ -160,7 +165,7 @@ namespace MapUpgrade
 
         private Dictionary<string, int> getMapPairs()
         {
-            var maps = getInventoryMaps();
+            //getInventoryMaps();
 
             var mapCount = new Dictionary<string, int>();
             foreach (var key in maps)
@@ -175,7 +180,7 @@ namespace MapUpgrade
         {
             var mapCount = getMapPairs();
             var prevMousePosition = Mouse.GetCursorPosition();
-            var maps = getInventoryMaps();
+            //getInventoryMaps();
 
             foreach (var key in mapCount)
                 if (key.Value >= 3)
