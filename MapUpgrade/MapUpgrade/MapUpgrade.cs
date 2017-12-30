@@ -115,8 +115,8 @@ namespace MapUpgrade
 
         private void indicateMapPairs()
         {
-            var thisStash = ingameState.ServerData.StashPanel.VisibleStash.Address;
             if (!ingameState.IngameUi.InventoryPanel.IsVisible) return;
+            var thisStash = ingameState.ServerData.StashPanel.VisibleStash.Address;
 
             if (currentStash != thisStash)
             {
