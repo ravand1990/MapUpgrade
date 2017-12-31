@@ -24,7 +24,6 @@ namespace MapUpgrade
         private readonly IngameState ingameState;
         private bool isBusy;
         private MD5 md5Hasher = MD5.Create();
-        private long currentStash;
         private List<Tuple<string, RectangleF>> maps = new List<Tuple<string, RectangleF>>();
         static Thread getMapsThread;
 
@@ -70,6 +69,7 @@ namespace MapUpgrade
         public override void OnClose()
         {
             base.OnClose();
+            getMapsThread.Abort();
         }
 
         private void getInventoryMaps()
