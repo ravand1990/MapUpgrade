@@ -94,24 +94,28 @@ namespace MapUpgrade
                     maps = new List<Tuple<string, RectangleF>>();
                     var visibleStash = ingameState.ServerData.StashPanel.VisibleStash;
                     var i = 0;
-                    foreach (var item in visibleStash.VisibleInventoryItems)
+                    try
                     {
-                        var itemBase = GameController.Files.BaseItemTypes.Translate(item.Item.Path);
-                        var mapTier = item.Item.GetComponent<Map>().Tier;
-                        var itemMods = item.Item.GetComponent<Mods>();
-
-                        i++;
-                        var itemClass = "";
-                        try { itemClass = itemBase.ClassName; }
-                        catch (Exception e) { }
-
-                        if (itemClass.Equals("Map") && mapTier <= Settings.Tier && itemMods.ItemRarity != ItemRarity.Unique)
+                        foreach (var item in visibleStash.VisibleInventoryItems)
                         {
-                            var rect = item.GetClientRect();
-                            var map = new Tuple<string, RectangleF>(itemBase.BaseName, rect);
-                            maps.Add(map);
+                            var itemBase = GameController.Files.BaseItemTypes.Translate(item.Item.Path);
+                            var mapTier = item.Item.GetComponent<Map>().Tier;
+                            var itemMods = item.Item.GetComponent<Mods>();
+
+                            i++;
+                            var itemClass = "";
+                            try { itemClass = itemBase.ClassName; }
+                            catch (Exception e) { }
+
+                            if (itemClass.Equals("Map") && mapTier <= Settings.Tier && itemMods.ItemRarity != ItemRarity.Unique)
+                            {
+                                var rect = item.GetClientRect();
+                                var map = new Tuple<string, RectangleF>(itemBase.BaseName, rect);
+                                maps.Add(map);
+                            }
                         }
                     }
+                    catch (Exception e) { }
                 }
                 Thread.Sleep(1000);
             }
