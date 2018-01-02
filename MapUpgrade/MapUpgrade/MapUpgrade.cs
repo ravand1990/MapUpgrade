@@ -89,13 +89,14 @@ namespace MapUpgrade
         {
             while (true)
             {
-                if (ingameState.ServerData.StashPanel.IsVisible)
+                try
                 {
-                    maps = new List<Tuple<string, RectangleF>>();
-                    var visibleStash = ingameState.ServerData.StashPanel.VisibleStash;
-                    var i = 0;
-                    try
+                    if (ingameState.ServerData.StashPanel.IsVisible)
                     {
+                        maps = new List<Tuple<string, RectangleF>>();
+                        var visibleStash = ingameState.ServerData.StashPanel.VisibleStash;
+                        var i = 0;
+
                         foreach (var item in visibleStash.VisibleInventoryItems)
                         {
                             var itemBase = GameController.Files.BaseItemTypes.Translate(item.Item.Path);
@@ -115,8 +116,8 @@ namespace MapUpgrade
                             }
                         }
                     }
-                    catch (Exception e) { }
                 }
+                catch (Exception e) { }
                 Thread.Sleep(1000);
             }
         }
