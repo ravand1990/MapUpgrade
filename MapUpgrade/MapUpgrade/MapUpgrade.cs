@@ -37,14 +37,27 @@ namespace MapUpgrade
         {
             base.Initialise();
             getMapsThread = new Thread(getInventoryMaps);
-            getMapsThread.Start();
         }
 
         public override void Render()
         {
-            if (!Settings.Enable)
-                return;
-            debug();
+            if (!Settings.Enable) return;
+
+            switch (getMapsThread.ThreadState)
+            {
+                case ThreadState.Unstarted:
+                    getMapsThread.Start();
+                    break;
+                case ThreadState.Stopped:
+                    getMapsThread.Start();
+                    break;
+                case ThreadState.Aborted:
+                    getMapsThread.Start();
+                    break;
+            }
+            if (getMapsThread.ThreadState == ThreadState.Unstarted)
+            {
+            }
 
             indicateMapPairs();
 
@@ -74,41 +87,33 @@ namespace MapUpgrade
 
         private void getInventoryMaps()
         {
-            while (true) { 
-            if (ingameState.ServerData.StashPanel.IsVisible)
+            while (true)
             {
-            maps = new List<Tuple<string, RectangleF>>();
-            var visibleStash = ingameState.ServerData.StashPanel.VisibleStash;
-            var i = 0;
-            foreach (var item in visibleStash.VisibleInventoryItems)
-            {
-                var itemBase = GameController.Files.BaseItemTypes.Translate(item.Item.Path);
-                var mapTier = item.Item.GetComponent<Map>().Tier;
-                var itemMods = item.Item.GetComponent<Mods>();        
-
-               // if(i==0) LogError(itemBase.BaseName+":"+mark, 10);
-
-
-                i++;
-                var itemClass = "";
-                try
+                if (ingameState.ServerData.StashPanel.IsVisible)
                 {
-                    itemClass = itemBase.ClassName;
-                }
-                catch (Exception e)
-                {
-                }
+                    maps = new List<Tuple<string, RectangleF>>();
+                    var visibleStash = ingameState.ServerData.StashPanel.VisibleStash;
+                    var i = 0;
+                    foreach (var item in visibleStash.VisibleInventoryItems)
+                    {
+                        var itemBase = GameController.Files.BaseItemTypes.Translate(item.Item.Path);
+                        var mapTier = item.Item.GetComponent<Map>().Tier;
+                        var itemMods = item.Item.GetComponent<Mods>();
 
+                        i++;
+                        var itemClass = "";
+                        try { itemClass = itemBase.ClassName; }
+                        catch (Exception e) { }
 
-                if (itemClass.Equals("Map") && mapTier <= Settings.Tier && itemMods.ItemRarity != ItemRarity.Unique)
-                {
-                    var rect = item.GetClientRect();
-                    var map = new Tuple<string, RectangleF>(itemBase.BaseName, rect);
-                    maps.Add(map);
-                }
+                        if (itemClass.Equals("Map") && mapTier <= Settings.Tier && itemMods.ItemRarity != ItemRarity.Unique)
+                        {
+                            var rect = item.GetClientRect();
+                            var map = new Tuple<string, RectangleF>(itemBase.BaseName, rect);
+                            maps.Add(map);
+                        }
                     }
                 }
-            Thread.Sleep(1000);
+                Thread.Sleep(1000);
             }
         }
 
@@ -116,38 +121,44 @@ namespace MapUpgrade
         private void indicateMapPairs()
         {
             if (!ingameState.ServerData.StashPanel.IsVisible) return;
-      
+
             if (maps != null)
             {
-            
-            var foundTuples = maps.GroupBy(c => c.Item1).Where(g => g.Skip(1).Any() && g.Count() >= 3)
-                .SelectMany(c => c).OrderBy(c => c.Item1).ToList();
+                List<Tuple<string, RectangleF>> foundTuples = null;
+                try
+                {
+                    foundTuples = maps.GroupBy(c => c.Item1).Where(g => g.Skip(1).Any() && g.Count() >= 3)
+                    .SelectMany(c => c).OrderBy(c => c.Item1).ToList();
+                }
+                catch (Exception e) { }
 
+                var i = 0;
+                var j = 0;
 
-            var i = 0;
-            var j = 0;
-            foreach (var map in foundTuples)
-            {
+                if (foundTuples != null)
+                {
+                    foreach (var map in foundTuples)
+                    {
+                        String r = map.Item1[0].ToString();
+                        String g = map.Item1[map.Item1.Length - 5].ToString();
+                        String b = map.Item1[(map.Item1.Length - 5) / 2].ToString();
 
-                String r = map.Item1[0].ToString();
-                String g = map.Item1[map.Item1.Length - 5].ToString();
-                String b = map.Item1[(map.Item1.Length - 5)/2].ToString(); ;
+                        var hashedR = md5Hasher.ComputeHash(Encoding.UTF8.GetBytes(r));
+                        var hashedG = md5Hasher.ComputeHash(Encoding.UTF8.GetBytes(g));
+                        var hashedB = md5Hasher.ComputeHash(Encoding.UTF8.GetBytes(b));
 
-                var hashedR = md5Hasher.ComputeHash(Encoding.UTF8.GetBytes(r));
-                var hashedG = md5Hasher.ComputeHash(Encoding.UTF8.GetBytes(g));
-                var hashedB = md5Hasher.ComputeHash(Encoding.UTF8.GetBytes(b));
+                        var iR = Math.Abs(BitConverter.ToInt32(hashedR, 0)) % 256;
+                        var iG = Math.Abs(BitConverter.ToInt32(hashedG, 0)) % 256;
+                        var iB = Math.Abs(BitConverter.ToInt32(hashedB, 0)) % 256;
 
-                var iR = Math.Abs(BitConverter.ToInt32(hashedR, 0)) % 256;
-                var iG = Math.Abs(BitConverter.ToInt32(hashedG, 0)) % 256;
-                var iB = Math.Abs(BitConverter.ToInt32(hashedB, 0)) % 256;
-
-                int offset = 6;
-                RectangleF rect = new RectangleF((int)map.Item2.X+offset/2,(int)map.Item2.Y+offset/2,map.Item2.Width-offset,map.Item2.Height-offset);
-                Graphics.DrawFrame(rect, 2, new Color(iR,iG,iB));
-                if (j < foundTuples.Count - 1 && foundTuples[j].Item1 != foundTuples[j + 1].Item1)
-                    i++;
-                j++;
-            }
+                        int offset = 6;
+                        RectangleF rect = new RectangleF((int)map.Item2.X + offset / 2, (int)map.Item2.Y + offset / 2, map.Item2.Width - offset, map.Item2.Height - offset);
+                        Graphics.DrawFrame(rect, 2, new Color(iR, iG, iB));
+                        if (j < foundTuples.Count - 1 && foundTuples[j].Item1 != foundTuples[j + 1].Item1)
+                            i++;
+                        j++;
+                    }
+                }
             }
         }
 
@@ -193,12 +204,12 @@ namespace MapUpgrade
 
         private void moveMaps(Vector2 itemPosition)
         {
-            Keyboard.HoldKey((byte) Keys.LControlKey);
+            Keyboard.HoldKey((byte)Keys.LControlKey);
             Thread.Sleep(Mouse.DELAY_MOVE);
             Mouse.moveMouse(itemPosition);
             Mouse.LeftUp(Settings.Speed);
             Thread.Sleep(Mouse.DELAY_MOVE);
-            Keyboard.ReleaseKey((byte) Keys.LControlKey);
+            Keyboard.ReleaseKey((byte)Keys.LControlKey);
         }
 
         private void debug()
