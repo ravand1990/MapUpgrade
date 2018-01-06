@@ -21,22 +21,25 @@ namespace MapUpgrade
 {
     internal class MapUpgrade : BaseSettingsPlugin<Settings>
     {
-        private readonly IngameState ingameState;
+        private IngameState ingameState;
         private bool isBusy;
         private MD5 md5Hasher = MD5.Create();
         private List<Tuple<string, RectangleF>> maps = new List<Tuple<string, RectangleF>>();
         static Thread getMapsThread;
+        private Vector2 windowOffset = new Vector2();
+
 
         public MapUpgrade()
         {
-            ingameState = GameController.Game.IngameState;
             PluginName = "MapUpgrade";
         }
 
         public override void Initialise()
         {
-            base.Initialise();
+            ingameState = GameController.Game.IngameState;
+            windowOffset = GameController.Window.GetWindowRectangle().TopLeft;
             getMapsThread = new Thread(getInventoryMaps);
+            base.Initialise();
         }
 
         public override void Render()
@@ -209,6 +212,7 @@ namespace MapUpgrade
 
         private void moveMaps(Vector2 itemPosition)
         {
+            itemPosition += windowOffset;
             Keyboard.HoldKey((byte)Keys.LControlKey);
             Thread.Sleep(Mouse.DELAY_MOVE);
             Mouse.moveMouse(itemPosition);
